@@ -19,7 +19,6 @@ package org.sigsoft;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -37,7 +36,7 @@ public class PdfCheckerTest {
     PdfDocument doc;
 
     @BeforeEach
-    public void setUp() throws IOException {
+    public void setUp() {
         pc = new PdfChecker();
 
         // we'll mock the document so that we can easily test various content cases.
@@ -112,7 +111,7 @@ public class PdfCheckerTest {
     @Test
     void testLinesBeforeReferences() {
         createReferencesOnePager("1\n2\n3\n4\nREFERENCES\n[1] Test Infected");
-        assertEquals(null, pc.figuresAfterLimit());
+        assertNull(pc.figuresAfterLimit());
     }
 
     @Test
@@ -125,7 +124,7 @@ public class PdfCheckerTest {
     @Test
     void testOnlyReferences() {
         createReferencesOnePager("REFERENCES\n[1] Test Infected");
-        assertEquals(null, pc.figuresAfterLimit());
+        assertNull(pc.figuresAfterLimit());
     }
 
     private void createReferencesOnePager(String content) {
@@ -163,7 +162,7 @@ public class PdfCheckerTest {
     void testBlindedEmail(String email) {
         String fullPage = String.format("TEXT-BEFORE\n%s\nTEXT-AFTER", email);
         when(doc.textAtPage(eq(1))).thenReturn(fullPage);
-        assertEquals(null, pc.findEmails());
+        assertNull(pc.findEmails());
     }
 
     @Test
@@ -205,13 +204,13 @@ public class PdfCheckerTest {
     }
 
     @Test
-    void testStrippingNonSquentialLineNumbers() {
+    void testStrippingNonSequentialLineNumbers() {
         String text = "10\n11\n14\n15\nHELLO WORLD";
         assertEquals("14\n15\nHELLO WORLD", pc.stripLineNumbers(text));
     }
 
     @Test
-    void testStrippingSquentialLineNumbers() {
+    void testStrippingSequentialLineNumbers() {
         String text = "10\n11\n12\n13\nHELLO WORLD";
         assertEquals("HELLO WORLD", pc.stripLineNumbers(text));
     }

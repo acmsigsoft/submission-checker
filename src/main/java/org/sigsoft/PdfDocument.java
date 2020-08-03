@@ -51,6 +51,7 @@ public class PdfDocument implements AutoCloseable {
         pdf = PDDocument.load(input);
     }
 
+    @NotNull
     public String getFileName() {
         return fileName;
     }
@@ -75,7 +76,7 @@ public class PdfDocument implements AutoCloseable {
     /**
      * Return the text of a specific page.
      *
-     * @param pagenr
+     * @param pagenr Number of page to extract (ranges from 1 to nr of pages).
      * @return The text of the page
      * @throws RuntimeException in case pdf was messed up.
      */

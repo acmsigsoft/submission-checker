@@ -88,8 +88,7 @@ public class PdfChecker {
             // (should be empty if references start on page 11).
             // We're not interested in line nrs, so strip those first.
             String before = pageText.substring(0, findRefs.start());
-            String stripped = stripHeader(before);
-            return stripped;
+            return stripHeader(before);
         }
         // Not on the references page.
         return null;
@@ -124,9 +123,8 @@ public class PdfChecker {
         String[] lines = acmPage.split("\\n");
         int leftColumn = countLineNumbers(lines);
         final int minimumPageLength = 30;
-        final int lookAhead = 3;
         if (leftColumn > minimumPageLength && leftColumn < lines.length) {
-             String header = lines[leftColumn];
+            // if you'd like to know the header, it is in lines[leftColumn];
             // in rare cases the header can take three (!) lines. Let's check.
             if (leftColumn + 1 < lines.length && !Pattern.matches("\\d+", lines[leftColumn + 1])) {
                 leftColumn++;
@@ -159,7 +157,7 @@ public class PdfChecker {
         String line1 = page3.substring(0, page3.indexOf("\n"));
         if (line1.startsWith(title)) {
             // assume header is one line, and drop it from the page.
-            return acmPage.substring(acmPage.indexOf("\n") + 1, acmPage.length());
+            return acmPage.substring(acmPage.indexOf("\n") + 1);
         } else {
             // nothing to strip
             return acmPage;
@@ -252,7 +250,7 @@ public class PdfChecker {
         if (meta != null) {
             return blindedIdentity(meta)? null : meta;
         }
-        return meta;
+        return null;
     }
 
     public String revealingEmail(String email) {
