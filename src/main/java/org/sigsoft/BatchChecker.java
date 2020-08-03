@@ -17,36 +17,63 @@
 
 package org.sigsoft;
 
+import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class BatchChecker {
 
-    private Log log = LogFactory.getLog(BatchChecker.class);
-
-    public boolean paperOK(PdfChecker pc) {
-        return pc.pageCount() <= pc.getTotalLimit() &&
-                pc.pageCount() > 1
-                && pc.referencesPage() <= pc.pageLimit +1
-                && pc.isIEEE()
-                && pc.figuresAfterLimit() == null
-                && pc.findEmails() == null
-                && pc.findAuthorIdentity() == null;
+    static {
+        // PdfBox can generate a lot of noise.
+        java.util.logging.Logger
+                .getLogger("org.apache.pdfbox").setLevel(java.util.logging.Level.SEVERE);
+        java.util.logging.Logger
+                .getLogger("org.apache.fontbox.ttf").setLevel(java.util.logging.Level.SEVERE);
     }
 
-    public String reportPaper(PdfChecker pc) {
-        return String.format("%s, %d, %d, %b, %s, %s, %s",
-                pc.getFileName(),
-                pc.pageCount(),
-                pc.referencesPage(),
-                pc.isIEEE(),
-                pc.figuresAfterLimit(),
-                pc.findEmails(),
-                pc.findAuthorIdentity());
+    private final Log log = LogFactory.getLog(BatchChecker.class);
+
+    // Style can be "ACM" or "IEEE";
+    public String style = "IEEE";
+
+    public String paperIssues(PdfChecker pc) {
+        List<String> issues = new ArrayList<>();
+        if (pc.pageCount() > pc.getTotalLimit()) {
+            issues.add(String.format("oversize:%d", pc.pageCount()));
+        }
+        if (pc.referencesPage() > pc.pageLimit + 1) {
+            issues.add(String.format("reference-page-after-limit:%d",pc.referencesPage()));
+        }
+        if (style.equals("ACM") && !pc.isACM() || style.equals("IEEE") && !pc.isIEEE()) {
+            issues.add(String.format("wrong-template:must-be-%s", style));
+        }
+        String textAfterLimit = pc.figuresAfterLimit();
+        if (textAfterLimit != null) {
+            issues.add(String.format("non-references-after-p10:``%s''", textAfterLimit));
+        }
+        String emails = pc.findEmails();
+        if (emails != null) {
+            issues.add(String.format("author-revealing-email:``%s''", emails));
+        }
+        String authors = pc.findAuthorIdentity();
+        if (authors != null) {
+            issues.add(String.format("author-revealing-meta-data:``%s''", authors));
+        }
+
+        String result;
+        if (issues.isEmpty()) {
+            result = "no-issues";
+        } else {
+            result = String.format("issues-found: {%s}", String.join(", ", issues));
+        }
+
+        return String.format("%s: %s", pc.getFileName(), result);
     }
 
     public void processPaper(File paper) throws IOException {
@@ -55,10 +82,9 @@ public class BatchChecker {
             doc.loadFile(paper);
             PdfChecker pc = new PdfChecker();
             pc.setDocument(doc);
-            if (!paperOK(pc)) {
-                System.out.println(reportPaper(pc));
-            }
-            // System.out.println(pc.text(1));
+            System.out.println(paperIssues(pc));
+            // for debugging this is sometimes useful:
+            // System.out.println(doc.textAtPage(11));
         }
     }
 
@@ -70,28 +96,48 @@ public class BatchChecker {
         }
     }
 
-    public static void main(String[] argv) throws IOException {
-        BatchChecker bc = new BatchChecker();
+    public CommandLine processOptions(String ...argv) throws ParseException {
+        Options options = new Options();
+        options.addOption("s", "style", true, "ACM or IEEE style, default IEEE");
+        options.addOption("h", "help", false, "Display help information");
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, argv);
+
+        this.style = cmd.getOptionValue("s", "IEEE");
+        if (cmd.hasOption("h")) {
+            usage("--help information:");
+        }
+        return cmd;
+    }
+
+    public void processFileArgs(String[] argv) throws IOException {
         if (argv.length == 0) {
             String defaultFolder = "icse2019";
             usage("No arguments provided, switching to default folder: " + defaultFolder);
-            bc.processPapers(new File(defaultFolder));
+            processPapers(new File(defaultFolder));
         }
         for (String arg: argv) {
             File farg = new File(arg);
             if (farg.isDirectory()) {
-                bc.processPapers(farg);
+                processPapers(farg);
             } else if (arg.endsWith(".pdf")) {
-                bc.processPaper(farg);
+                processPaper(farg);
             } else {
                 usage(String.format("Argument not a folder: %s", arg));
             }
         }
-     }
+    }
 
-     private static void usage(String error) {
-        String msg = String.format("Usage: %s [folder-with-pdfs...] | [pdf-file ...]", BatchChecker.class.getName());
+    public void usage(String error) {
+        String msg = String.format("Usage: %s [options] [folder-with-pdfs...] [pdf-file ...]\n", BatchChecker.class.getName());
+        msg += "  Options:\n  --style <style>    Set style in ACM or IEEE, default IEEE\n";
         System.err.println(msg);
         System.err.println(error);
+    }
+
+    public static void main(String[] argv) throws IOException, ParseException {
+        BatchChecker bc = new BatchChecker();
+        CommandLine cmd = bc.processOptions(argv);
+        bc.processFileArgs(cmd.getArgs());
      }
 }

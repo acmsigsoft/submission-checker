@@ -69,6 +69,12 @@ public class PdfDocumentTest {
     }
 
     @Test
+    public void testMetaATitle() {
+        assertNull(pdf.metaDataTitle());
+    }
+
+
+    @Test
     public void testPageCount() {
         assertEquals(11, pdf.pageCount());
     }

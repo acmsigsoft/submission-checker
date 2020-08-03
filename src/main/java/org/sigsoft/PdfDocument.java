@@ -77,7 +77,7 @@ public class PdfDocument implements AutoCloseable {
      *
      * @param pagenr
      * @return The text of the page
-     * @trhows RuntimeException in case pdf was messed up.
+     * @throws RuntimeException in case pdf was messed up.
      */
     public String textAtPage(int pagenr) {
         assert pagenr > 0;
@@ -90,7 +90,6 @@ public class PdfDocument implements AutoCloseable {
             reader.setEndPage(pagenr);
             return reader.getText(pdf);
         } catch (IOException e) {
-            // log.error(String.format("File %s: Error fetching text from page %d", getFileName(), pagenr), e);
             throw new RuntimeException(e);
         }
     }
@@ -103,10 +102,11 @@ public class PdfDocument implements AutoCloseable {
     public String metaDataAuthor() {
         PDDocumentInformation pdi = pdf.getDocumentInformation();
         String metaAuthor = pdi.getAuthor();
-        if (metaAuthor == null || metaAuthor.equals("")) {
-            return null;
+        if (metaAuthor != null) {
+            String stripped = metaAuthor.strip();
+            return stripped.equals("")? null: stripped;
         } else {
-            return metaAuthor;
+            return null;
         }
     }
 
@@ -123,6 +123,16 @@ public class PdfDocument implements AutoCloseable {
             return null;
         } else {
             return creator;
+        }
+    }
+
+    public String metaDataTitle() {
+        PDDocumentInformation pdi = pdf.getDocumentInformation();
+        String title = pdi.getTitle();
+        if (title == null || title.equals("")) {
+            return null;
+        } else {
+            return title;
         }
     }
 }

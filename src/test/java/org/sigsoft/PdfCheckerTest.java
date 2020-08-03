@@ -19,6 +19,7 @@ package org.sigsoft;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -81,7 +82,7 @@ public class PdfCheckerTest {
     @Test
     void multiPageReferences() {
         String[] pages = {
-                "Title page",
+                "Title page\nAbstract",
                 "Introduction",
                 "References",
                 "[1] Test Infected"
@@ -94,6 +95,8 @@ public class PdfCheckerTest {
     @ValueSource(strings = {
             "Table I",
             "Figure 3",
+            "Figure 3: With a caption",
+            "Fig. 4: Also with a caption",
             "Appendix I",
             "Appendix",
             "Acknowledgments",
@@ -101,13 +104,21 @@ public class PdfCheckerTest {
     })
     void testTextOnReferencePage(String text) {
         createReferencesOnePager(String.format("TEXT BEFORE\n%s\nTEXT AFTER", text));
-        assertEquals(text, pc.figuresAfterLimit());
+        String resultingText = pc.figuresAfterLimit();
+        assertNotNull(resultingText);
+        assertTrue(text.startsWith(pc.figuresAfterLimit()));
     }
 
     @Test
-    void testTextBeforeReferences() {
-        createReferencesOnePager("123456789\nREFERENCES\n[1] Test Infected");
-        String expected = "10-chars-before-REFERENCES: 12345678";
+    void testLinesBeforeReferences() {
+        createReferencesOnePager("1\n2\n3\n4\nREFERENCES\n[1] Test Infected");
+        assertEquals(null, pc.figuresAfterLimit());
+    }
+
+    @Test
+    void testPlainTextBeforeReferences() {
+        createReferencesOnePager("ABCDEFGHIJ\nREFERENCES\n[1] Test Infected");
+        String expected = "11-chars-before-REFERENCES: ABCDEFGH";
         assertEquals(expected, pc.figuresAfterLimit());
     }
 
@@ -115,6 +126,20 @@ public class PdfCheckerTest {
     void testOnlyReferences() {
         createReferencesOnePager("REFERENCES\n[1] Test Infected");
         assertEquals(null, pc.figuresAfterLimit());
+    }
+
+    private void createReferencesOnePager(String content) {
+        String text = content + "\n[1] Test Infected\n";
+        when(doc.textAtPage(eq(1))).thenReturn(text);
+        pc.pageLimit = 0;
+        pc.referenceLimit = 1;
+    }
+
+    private void createDocument(String... pages) {
+        for (int i = 0; i < pages.length; i++) {
+            when(doc.textAtPage(eq(i + 1))).thenReturn(pages[i] + "\n");
+        }
+        when(doc.pageCount()).thenReturn(pages.length);
     }
 
     @ParameterizedTest
@@ -161,17 +186,63 @@ public class PdfCheckerTest {
         assertEquals("Donald Knuth", pc.findAuthorIdentity());
     }
 
-    private void createReferencesOnePager(String content) {
-        String text = content + "\n[1] Test Infected\n";
-        when(doc.textAtPage(eq(1))).thenReturn(text);
-        pc.pageLimit = 0;
-        pc.referenceLimit = 1;
+    @Test
+    void testCountingLineNumbers() {
+        String[] text = {"10", "11", "12", "13", "HELLO WORLD" };
+        assertEquals(4, pc.countLineNumbers(text));
+     }
+
+    @Test
+    void testCountingNonConsecutiveLineNumbers() {
+        String[] text = {"10", "11", "14", "15", "HELLO WORLD" };
+        assertEquals(2, pc.countLineNumbers(text));
     }
 
-    private void createDocument(String[] pages) {
-        for (int i = 0; i < pages.length; i++) {
-            when(doc.textAtPage(eq(i + 1))).thenReturn(pages[i] + "\n");
-        }
-        when(doc.pageCount()).thenReturn(pages.length);
+    @Test
+    void testCountingNoLineNumbers() {
+        String[] text = { "HELLO WORLD" };
+        assertEquals(0, pc.countLineNumbers(text));
+    }
+
+    @Test
+    void testStrippingNonSquentialLineNumbers() {
+        String text = "10\n11\n14\n15\nHELLO WORLD";
+        assertEquals("14\n15\nHELLO WORLD", pc.stripLineNumbers(text));
+    }
+
+    @Test
+    void testStrippingSquentialLineNumbers() {
+        String text = "10\n11\n12\n13\nHELLO WORLD";
+        assertEquals("HELLO WORLD", pc.stripLineNumbers(text));
+    }
+
+    @Test
+    void testStripHeaderNoLines() {
+        String[] pages = {
+                "Title\nAuthors\nAbstract",
+                "Conference Header\nIntroduction",
+                "Title Header\nRelated Work"
+        };
+        createDocument(pages);
+        assertEquals("Introduction", pc.stripHeader(pages[1]));
+    }
+
+    @Test
+    void testMetaTitle() {
+        when(doc.metaDataTitle()).thenReturn("Test Infected");
+        createDocument("Test Infected: A long title\nAbstract\n");
+        assertEquals("Test Infected: A long title", pc.getTitle());
+    }
+
+    @Test
+    void testFirstLineTitle() {
+        createDocument("Test Infected\nAbstract\nBla bla");
+        assertEquals("Test Infected", pc.getTitle());
+    }
+
+    @Test
+    void testNumberedFirstLineTitle() {
+        createDocument("1\n2\n3\nTest Infected\nAbstract\nBla bla");
+        assertEquals("Test Infected", pc.getTitle());
     }
 }

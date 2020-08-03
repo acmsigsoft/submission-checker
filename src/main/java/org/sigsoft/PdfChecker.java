@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,12 +39,10 @@ import java.util.regex.Pattern;
 public class PdfChecker {
 
     @NotNull PdfDocument document;
-    //PDDocument pdf;
-    private String fileName;
     int pageLimit = 10;
     int referenceLimit = 2;
 
-    private Log log = LogFactory.getLog(PdfChecker.class);
+    final private Log log = LogFactory.getLog(PdfChecker.class);
 
     public int getTotalLimit() {
         return pageLimit + referenceLimit;
@@ -53,7 +52,7 @@ public class PdfChecker {
         return document.pageCount();
     }
 
-    public void setDocument(PdfDocument document) {
+    public void setDocument(@NotNull PdfDocument document) {
         this.document = document;
     }
 
@@ -87,7 +86,10 @@ public class PdfChecker {
             // We're on the references page.
             // Return text _preceding_ the References.
             // (should be empty if references start on page 11).
-            return pageText.substring(0, findRefs.start());
+            // We're not interested in line nrs, so strip those first.
+            String before = pageText.substring(0, findRefs.start());
+            String stripped = stripHeader(before);
+            return stripped;
         }
         // Not on the references page.
         return null;
@@ -101,10 +103,108 @@ public class PdfChecker {
         String producer = document.metaDataCreator();
         if (producer != null && match("acmart", producer) != null) {
             return true;
-        } else {
-            // no luck with meta data. Check content of first page.
-            return revealingEmail("permissions@acm.org") != null;
         }
+        // no luck with meta data. Check content of first page.
+        String permissions = revealingEmail("permissions@acm.org");
+        if (permissions != null) {
+            return true;
+        }
+        // no luck with official copyright template. Try format.
+        String format = revealingEmail("ACM Reference format:");
+        if (format != null) {
+            return true;
+        }
+        // no luck: Are there (many) line numbers?
+        String page1 = document.textAtPage(1);
+        int lineCount = countLineNumbers(page1.split("\n"));
+        return lineCount > 30;
+    }
+
+    String stripHeader(@NotNull String acmPage) {
+        String[] lines = acmPage.split("\\n");
+        int leftColumn = countLineNumbers(lines);
+        final int minimumPageLength = 30;
+        final int lookAhead = 3;
+        if (leftColumn > minimumPageLength && leftColumn < lines.length) {
+             String header = lines[leftColumn];
+            // in rare cases the header can take three (!) lines. Let's check.
+            if (leftColumn + 1 < lines.length && !Pattern.matches("\\d+", lines[leftColumn + 1])) {
+                leftColumn++;
+                if (leftColumn + 1 < lines.length && !Pattern.matches("\\d+", lines[leftColumn + 1])) {
+                    leftColumn++;
+                }
+            }
+            String[] remainingLines = Arrays.copyOfRange(lines, leftColumn + 1, lines.length);
+            int rightColumn = countLineNumbers(remainingLines);
+            if (rightColumn > minimumPageLength) {
+                return String.join("\n", Arrays.copyOfRange(remainingLines, rightColumn, remainingLines.length));
+            } else {
+                // left column numbered, but right one not ...
+                return String.join("\n", remainingLines);
+            }
+        } else {
+            //return acmPage;
+            return stripNonNumberedHeader(acmPage);
+        }
+    }
+
+    String stripNonNumberedHeader(@NotNull String acmPage) {
+        if (pageCount() < 3) {
+            // cannot determine whether headers are used.
+            return acmPage;
+        }
+        String title = getTitle();
+        // in ACM format odd pages can contain title header.
+        String page3 = document.textAtPage(3);
+        String line1 = page3.substring(0, page3.indexOf("\n"));
+        if (line1.startsWith(title)) {
+            // assume header is one line, and drop it from the page.
+            return acmPage.substring(acmPage.indexOf("\n") + 1, acmPage.length());
+        } else {
+            // nothing to strip
+            return acmPage;
+        }
+    }
+
+    /**
+     * Strip initial line numbers from text, if present (as is the case for ACM formating).
+     * @param acmText Text potentially containing line numbers.
+     * @return Text with starting line numbers removed.
+     */
+    String stripLineNumbers(@NotNull String acmText) {
+        String[] lines = acmText.split("\\n");
+        int count = countLineNumbers(lines);
+        assert count >= 0;
+        assert count <= lines.length;
+        return String.join("\n", Arrays.copyOfRange(lines, count, lines.length));
+    }
+
+    /**
+     * Count how many of the starting lines of this string are pure line numbers,
+     * i.e., a consecutive series of numbers on new lines.
+     * @param lines Text potentially starting with line numbers
+     * @return Count of the number of starting lines that are just numbers.
+     */
+    int countLineNumbers(String ...lines) {
+        int i = 0;
+        int counter = -1;
+        while (i < lines.length) {
+            try {
+                int nr = Integer.parseInt(lines[i]);
+                if (counter != -1) {
+                    if (counter + 1 != nr ) {
+                         // Numbers not consecutive -- done.
+                        break;
+                    }
+                }
+                counter = nr;
+                i++;
+            } catch(NumberFormatException nfe) {
+                // first line of real text. Done.
+                break;
+            }
+        }
+        return i;
     }
 
     /**
@@ -137,18 +237,22 @@ public class PdfChecker {
             return null;
         } else {
             int abusiveCharCount = beforeReferences.length();
-            String content = beforeReferences.substring(0, leewayForPageNr);
+            String content = beforeReferences.substring(0, leewayForPageNr).replaceAll("\\n", "\\\\n");
             return String.format("%d-chars-before-REFERENCES: %s", abusiveCharCount, content);
         }
     }
 
     public String pageContainsFigure(int pagenr) {
-        String figRegEx = "^\\s*((((Fig\\.)|(Figure))\\s*\\d+)|(TABLE\\s*[IVX]+)|(APPENDIX\\s*\\w*)|ACKNOWLEDGE?MENTS)$";
+        String figRegEx = "^\\s*((((Fig\\.)|(Figure))\\s*\\d+)|(TABLE\\s*[IVX]+)|(APPENDIX)|ACKNOWLEDGE?MENTS)";
         return findOnPage(pagenr, figRegEx);
     }
 
     public String findAuthorIdentity() {
-        return document.metaDataAuthor();
+        String meta = document.metaDataAuthor();
+        if (meta != null) {
+            return blindedIdentity(meta)? null : meta;
+        }
+        return meta;
     }
 
     public String revealingEmail(String email) {
@@ -165,19 +269,18 @@ public class PdfChecker {
         String pat = curlyNames + "\\s*@\\s*" + domain;
         String found = findOnPage(1, pat);
         if (found != null) {
-            if (blindedEmail(found)) {
-                log.info(String.format("File %s: Blinded email OK: %s", this.getFileName(), found));
+            if (blindedIdentity(found)) {
                 return null;
             }
         }
         return found;
     }
 
-    private boolean blindedEmail(String email) {
-        String safeNames = "anonymous|anon|doe|blinded|nn|nobody|none|email|anonymized|firstname|lastname|xyz|xxx";
-        String safeDomains = "email|example|domain|address|blind";
-        String regex = String.format(".*(%s|%s).*", safeNames, safeDomains);
-        return match(regex, email) != null;
+    private boolean blindedIdentity(@NotNull String id) {
+        String safeNames = "anonymous|anon|doe|blinded|nn|nobody|none|email|anonymized|firstname|lastname|xyz|xxx|author";
+        String safeDomains = "email|example|domain|address|blind|review";
+        String regex = String.format(".*(%s|%s|permissions@acm.org).*", safeNames, safeDomains);
+        return match(regex, id) != null;
     }
 
     /**
@@ -203,7 +306,7 @@ public class PdfChecker {
     }
 
     /**
-     * Identify idenity revealing references to previous work.
+     * Identify identity-revealing references to previous work.
      * This test seems moderately useful at best, so use with caution.
      * @return String representing reference to previous work, or null if none could be found.
      */
@@ -218,5 +321,19 @@ public class PdfChecker {
 
     public String getFileName() {
         return document.getFileName();
+    }
+
+    public String getTitle() {
+        String metaTitle = document.metaDataTitle();
+        String page1 = stripLineNumbers(document.textAtPage(1));
+        String line1 = page1.substring(0, page1.indexOf("\n"));
+        if (metaTitle == null) {
+            return line1;
+        } else {
+            if (!metaTitle.startsWith(line1)) {
+                log.warn(String.format("Inconsistent titles: Meta = ``%s'', first-line = ``%s''", metaTitle, line1));
+            }
+            return line1;
+        }
     }
 }
