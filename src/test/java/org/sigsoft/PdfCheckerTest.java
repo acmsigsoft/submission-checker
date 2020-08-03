@@ -244,4 +244,10 @@ public class PdfCheckerTest {
         createDocument("1\n2\n3\nTest Infected\nAbstract\nBla bla");
         assertEquals("Test Infected", pc.getTitle());
     }
+
+    @Test
+    void testIEEEtitle() {
+        createDocument("XXXX 20XX IEEE \nTest Infected\nAbstract");
+        assertEquals("Test Infected", pc.getTitle());
+    }
 }

@@ -214,6 +214,10 @@ public class PdfChecker {
         if (isACM()) {
             return false;
         }
+        if (copyrightIEEE(getFirstLine(document.textAtPage(1)))) {
+            // an old MS Word Template, but ok for now.
+            return true;
+        }
         // we're not sure, but let's assume it's IEEE style.
         // can we think of more checks to do here?
         return true;
@@ -321,17 +325,25 @@ public class PdfChecker {
         return document.getFileName();
     }
 
+    /**
+     * Obtain the title of the document, which we assume to be the first line on page 1.
+     * (Note: Meta data rarely set, so discarded).
+     * @return Title of the document.
+     */
     public String getTitle() {
-        String metaTitle = document.metaDataTitle();
         String page1 = stripLineNumbers(document.textAtPage(1));
-        String line1 = page1.substring(0, page1.indexOf("\n"));
-        if (metaTitle == null) {
-            return line1;
-        } else {
-            if (!metaTitle.startsWith(line1)) {
-                log.warn(String.format("Inconsistent titles: Meta = ``%s'', first-line = ``%s''", metaTitle, line1));
-            }
-            return line1;
+        String line1 = getFirstLine(page1);
+        if (copyrightIEEE(line1)) {
+            line1 = getFirstLine(page1.substring(line1.length() + 1));
         }
+        return line1;
+    }
+
+    private String getFirstLine(String text) {
+        return text.substring(0, text.indexOf("\n"));
+    }
+
+    private boolean copyrightIEEE(String line) {
+        return line.matches(".*20XX IEEE.*");
     }
 }

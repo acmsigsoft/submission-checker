@@ -72,6 +72,7 @@ public class BatchChecker {
         } else {
             result = String.format("issues-found: {%s}", String.join(", ", issues));
         }
+        result = result + String.format(" ``%s''", pc.getTitle());
 
         return String.format("%s: %s", pc.getFileName(), result);
     }
