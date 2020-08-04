@@ -63,18 +63,18 @@ public class BatchChecker {
         }
         String authors = pc.findAuthorIdentity();
         if (authors != null) {
-            issues.add(String.format("author-revealing-meta-data:``%s''", authors));
+            issues.add(String.format("possibly-author-revealing-meta-data:``%s''", authors));
         }
 
         String result;
         if (issues.isEmpty()) {
-            result = "no-issues";
+            result = "no-issues   ";
         } else {
-            result = String.format("issues-found: {%s}", String.join(", ", issues));
+            result = String.format("issues-found {%s}", String.join(", ", issues));
         }
         result = result + String.format(" ``%s''", pc.getTitle());
 
-        return String.format("%s: %s", pc.getFileName(), result);
+        return String.format("%-24s %s", pc.getFileName(), result);
     }
 
     public void processPaper(File paper) throws IOException {
@@ -97,7 +97,7 @@ public class BatchChecker {
         }
     }
 
-    public CommandLine processOptions(String ...argv) throws ParseException {
+    public void processOptions(String ...argv) throws ParseException, IOException {
         Options options = new Options();
         options.addOption("s", "style", true, "ACM or IEEE style, default IEEE");
         options.addOption("h", "help", false, "Display help information");
@@ -106,16 +106,15 @@ public class BatchChecker {
 
         this.style = cmd.getOptionValue("s", "IEEE");
         if (cmd.hasOption("h")) {
-            usage("--help information:");
+            usage(null);
+            return;
         }
-        return cmd;
+        processFileArgs(cmd.getArgs());
     }
 
     public void processFileArgs(String[] argv) throws IOException {
         if (argv.length == 0) {
-            String defaultFolder = "icse2019";
-            usage("No arguments provided, switching to default folder: " + defaultFolder);
-            processPapers(new File(defaultFolder));
+            usage("No arguments provided, not processing any files.");
         }
         for (String arg: argv) {
             File farg = new File(arg);
@@ -130,15 +129,17 @@ public class BatchChecker {
     }
 
     public void usage(String error) {
+        if (error != null) {
+            System.err.println(String.format("ERROR: %s", error));
+        }
         String msg = String.format("Usage: %s [options] [folder-with-pdfs...] [pdf-file ...]\n", BatchChecker.class.getName());
-        msg += "  Options:\n  --style <style>    Set style in ACM or IEEE, default IEEE\n";
+        msg += "  Options:\n";
+        msg += "  --style <style>    Set style in ACM or IEEE, default IEEE\n";
         System.err.println(msg);
-        System.err.println(error);
     }
 
     public static void main(String[] argv) throws IOException, ParseException {
         BatchChecker bc = new BatchChecker();
-        CommandLine cmd = bc.processOptions(argv);
-        bc.processFileArgs(cmd.getArgs());
+        bc.processOptions(argv);
      }
 }
