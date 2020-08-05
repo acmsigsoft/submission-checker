@@ -336,14 +336,22 @@ public class PdfChecker {
         if (copyrightIEEE(line1)) {
             line1 = getFirstLine(page1.substring(line1.length() + 1));
         }
+        if (line1.strip().equals("")) {
+            return document.metaDataTitle();
+        }
         return line1;
     }
 
-    private String getFirstLine(String text) {
-        return text.substring(0, text.indexOf("\n"));
+    private String getFirstLine(@NotNull String text) {
+        int newLine = text.indexOf("\n");
+        if (newLine == -1) {
+            return "";
+        } else {
+            return text.substring(0, newLine);
+        }
     }
 
-    private boolean copyrightIEEE(String line) {
+    private boolean copyrightIEEE(@NotNull String line) {
         return line.matches(".*20XX IEEE.*");
     }
 }

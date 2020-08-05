@@ -250,4 +250,18 @@ public class PdfCheckerTest {
         createDocument("XXXX 20XX IEEE \nTest Infected\nAbstract");
         assertEquals("Test Infected", pc.getTitle());
     }
+
+    @Test
+    void testEmptyTitle() {
+        createDocument("");
+        assertEquals("", pc.getTitle());
+    }
+
+    @Test
+    void testEmptyFirstPage() {
+        // a somewhat bizarre special case needed for some pdf documents.
+        createDocument("", "Page 2\nAbstract");
+        when(doc.metaDataTitle()).thenReturn("Test Infected");
+        assertEquals("Test Infected", pc.getTitle());
+    }
 }

@@ -83,9 +83,15 @@ public class BatchChecker {
             doc.loadFile(paper);
             PdfChecker pc = new PdfChecker();
             pc.setDocument(doc);
-            System.out.println(paperIssues(pc));
             // for debugging this is sometimes useful:
-            // System.out.println(doc.textAtPage(11));
+            // int pagenr = 1;
+            // System.out.println(String.format("START-PAGE %d (of %d):---\n%sEND-PAGE\n", pagenr, doc.pageCount(), doc.textAtPage(pagenr)));
+
+            // The actual analysis:
+            System.out.println(paperIssues(pc));
+        } catch(Exception e) {
+            // report, but then
+            log.error(String.format("Error processing %s.", paper.getName()), e);
         }
     }
 
