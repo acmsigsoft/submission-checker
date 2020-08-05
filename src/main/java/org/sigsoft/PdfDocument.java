@@ -130,10 +130,13 @@ public class PdfDocument implements AutoCloseable {
     public String metaDataTitle() {
         PDDocumentInformation pdi = pdf.getDocumentInformation();
         String title = pdi.getTitle();
-        if (title == null || title.equals("")) {
+        if (title == null) {
             return null;
-        } else {
-            return title;
         }
+        title = title.strip();
+        if (title.equals("")) {
+            return null;
+        }
+        return title;
     }
 }

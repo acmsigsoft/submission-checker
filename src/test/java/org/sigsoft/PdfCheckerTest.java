@@ -206,13 +206,13 @@ public class PdfCheckerTest {
     @Test
     void testStrippingNonSequentialLineNumbers() {
         String text = "10\n11\n14\n15\nHELLO WORLD";
-        assertEquals("14\n15\nHELLO WORLD", pc.stripLineNumbers(text));
+        assertEquals("14\n15\nHELLO WORLD\n", pc.stripLineNumbers(text));
     }
 
     @Test
     void testStrippingSequentialLineNumbers() {
         String text = "10\n11\n12\n13\nHELLO WORLD";
-        assertEquals("HELLO WORLD", pc.stripLineNumbers(text));
+        assertEquals("HELLO WORLD\n", pc.stripLineNumbers(text));
     }
 
     @Test
@@ -254,7 +254,7 @@ public class PdfCheckerTest {
     @Test
     void testEmptyTitle() {
         createDocument("");
-        assertEquals("", pc.getTitle());
+        assertNull(pc.getTitle());
     }
 
     @Test
@@ -262,6 +262,18 @@ public class PdfCheckerTest {
         // a somewhat bizarre special case needed for some pdf documents.
         createDocument("", "Page 2\nAbstract");
         when(doc.metaDataTitle()).thenReturn("Test Infected");
+        assertEquals("Test Infected", pc.getTitle());
+    }
+
+    @Test
+    void testTitleOnly() {
+        createDocument("Just a Title\n");
+        assertEquals("Just a Title", pc.getTitle());
+    }
+
+    @Test
+    void testWhiteSpace() {
+        createDocument("   Test Infected   \nFnerk\n");
         assertEquals("Test Infected", pc.getTitle());
     }
 }

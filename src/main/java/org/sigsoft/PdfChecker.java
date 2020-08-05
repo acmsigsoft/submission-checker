@@ -155,7 +155,7 @@ public class PdfChecker {
         // in ACM format odd pages can contain title header.
         String page3 = document.textAtPage(3);
         String line1 = page3.substring(0, page3.indexOf("\n"));
-        if (line1.startsWith(title)) {
+        if (title != null && line1.startsWith(title)) {
             // assume header is one line, and drop it from the page.
             return acmPage.substring(acmPage.indexOf("\n") + 1);
         } else {
@@ -174,7 +174,7 @@ public class PdfChecker {
         int count = countLineNumbers(lines);
         assert count >= 0;
         assert count <= lines.length;
-        return String.join("\n", Arrays.copyOfRange(lines, count, lines.length));
+        return String.join("\n", Arrays.copyOfRange(lines, count, lines.length)) + "\n";
     }
 
     /**
@@ -332,9 +332,9 @@ public class PdfChecker {
      */
     public String getTitle() {
         String page1 = stripLineNumbers(document.textAtPage(1));
-        String line1 = getFirstLine(page1);
+        String line1 = getFirstLine(page1).strip();
         if (copyrightIEEE(line1)) {
-            line1 = getFirstLine(page1.substring(line1.length() + 1));
+            line1 = getFirstLine(page1.substring(line1.length() + 2));
         }
         if (line1.strip().equals("")) {
             return document.metaDataTitle();
@@ -342,7 +342,7 @@ public class PdfChecker {
         return line1;
     }
 
-    private String getFirstLine(@NotNull String text) {
+    @NotNull private String getFirstLine(@NotNull String text) {
         int newLine = text.indexOf("\n");
         if (newLine == -1) {
             return "";
