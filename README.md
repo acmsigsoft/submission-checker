@@ -20,13 +20,14 @@ submission guidelines.
 
 ## Usage
 
-The tool runs in java.
-It assumes all pdf you want to check are in a folder,
+The tool runs in java 1.8 and is built using Apache [maven](https://maven.apache.org/).
+It assumes all pdf files you want to check are in a folder,
 which you offer to the command line.
 
 - Clone git repository
 - Run `mvn clean package`
 - `java -jar target/pdfchecker-{version}-jar-with-dependencies.jar` <folder-with-pdfs>
+- The `--help` option can be used to display usage information.
 
 ## Features
 
@@ -37,6 +38,10 @@ The tool can check:
 - Occurrence of figures, tables, appendix etc after page 10
 - IEEE style (defined as not ACM)
 - Non-anonymous emails mentioned on page 1
+
+While the tool can handle papers in both IEEE and ACM style,
+the support for ACM style papers is still work in progress,
+and the accuracy may be a little lower.
 
 Features on the backlog:
 
