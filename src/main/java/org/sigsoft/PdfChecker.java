@@ -315,9 +315,11 @@ public class PdfChecker {
     public String previousWork() {
         String our = "our|my";
         String previous = "previous|earlier|prior";
-        String work = "work|study|approach|papers?|publications?|result";
+        String work = "work|study|studies|approach|papers?|publications?|result|findings?";
         String citation = "\\[[\\d\\,]+\\]";
         String regex = "(" + String.join(")\\s+(", our, previous, work, citation) + ")";
+        // TODO: it would be good to actually look up the citation in the text, and include in
+        // the report, as sometimes it is properly anonymized.
         return match(regex, document.fullText());
     }
 

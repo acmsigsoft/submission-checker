@@ -139,6 +139,7 @@ public class PdfCheckerTest {
             when(doc.textAtPage(eq(i + 1))).thenReturn(pages[i] + "\n");
         }
         when(doc.pageCount()).thenReturn(pages.length);
+        when(doc.fullText()).thenReturn(String.join("\n", pages));
     }
 
     @ParameterizedTest
@@ -275,5 +276,11 @@ public class PdfCheckerTest {
     void testWhiteSpace() {
         createDocument("   Test Infected   \nFnerk\n");
         assertEquals("Test Infected", pc.getTitle());
+    }
+
+    @Test
+    void testPreviousWork() {
+        createDocument("In our previous work [2]", "References\n[2] K. Beck. Test Infected");
+        assertEquals("our previous work [2]", pc.previousWork());
     }
 }

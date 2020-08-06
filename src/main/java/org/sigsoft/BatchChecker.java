@@ -65,6 +65,10 @@ public class BatchChecker {
         if (authors != null) {
             issues.add(String.format("possibly-author-revealing-meta-data:``%s''", authors));
         }
+        String previousWork = pc.previousWork();
+        if (previousWork != null) {
+            issues.add(String.format("previous-work-mentioned:``%s''", previousWork));
+        }
 
         String result;
         if (issues.isEmpty()) {
