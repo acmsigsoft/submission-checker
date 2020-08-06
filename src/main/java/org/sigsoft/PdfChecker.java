@@ -299,7 +299,11 @@ public class PdfChecker {
 
     private String match(@NotNull String regexp, @NotNull String text) {
         Pattern pat = Pattern.compile(regexp, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
-        Matcher match = pat.matcher(text);
+        return match(pat, text);
+    }
+
+    private String match(@NotNull Pattern pattern, @NotNull String text) {
+        Matcher match = pattern.matcher(text);
         if (match.find()) {
             return match.group(0).strip();
         } else {
@@ -313,14 +317,23 @@ public class PdfChecker {
      * @return String representing reference to previous work, or null if none could be found.
      */
     public String previousWork() {
+        // This is an expensive search, so we compile the pattern statically.
+        // TODO: it would be good to actually look up the citation in the text, and include in
+        // the report, as sometimes it is properly anonymized.
+        return match(previousWorkPattern(), document.fullText());
+    }
+
+    private static Pattern _previousWorkPattern = null;
+    private static Pattern previousWorkPattern() {
+        if (_previousWorkPattern != null) {
+            return _previousWorkPattern;
+        }
         String our = "our|my";
         String previous = "previous|earlier|prior";
         String work = "work|study|studies|approach|papers?|publications?|result|findings?";
         String citation = "\\[[\\d\\,]+\\]";
         String regex = "(" + String.join(")\\s+(", our, previous, work, citation) + ")";
-        // TODO: it would be good to actually look up the citation in the text, and include in
-        // the report, as sometimes it is properly anonymized.
-        return match(regex, document.fullText());
+        return Pattern.compile(regex, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
     }
 
     public String getFileName() {
