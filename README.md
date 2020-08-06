@@ -20,7 +20,7 @@ submission guidelines.
 
 ## Usage
 
-The tool runs in java 1.8 and is built using Apache [maven](https://maven.apache.org/).
+The tool runs in java 11 and is built using Apache [maven](https://maven.apache.org/).
 It assumes all pdf files you want to check are in a folder,
 which you offer to the command line.
 
@@ -61,7 +61,7 @@ It thankfully uses ideas from:
 - Robert Feldt (Chalmers)
 - Darko Marinov (UIUC)
 
-The ICSE 2019 submissions were used as initial
+The ICSE 2019 submissions (IEEE format) were used as initial
 test bed to detect violations and compare them
 with actual desk rejects from 2019 as manually
 identified by ICSE 2019 program chairs Tevfik Bultan

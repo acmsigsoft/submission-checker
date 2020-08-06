@@ -301,7 +301,7 @@ public class PdfChecker {
         Pattern pat = Pattern.compile(regexp, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
         Matcher match = pat.matcher(text);
         if (match.find()) {
-            return match.group(0);
+            return match.group(0).strip();
         } else {
             return null;
         }
