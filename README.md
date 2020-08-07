@@ -26,7 +26,7 @@ which you offer to the command line.
 
 - Clone git repository
 - Run `mvn clean package`
-- `java -jar target/pdfchecker-{version}-jar-with-dependencies.jar` <folder-with-pdfs>
+- `java -jar target/sfc-{version}-jar-with-dependencies.jar` <folder-with-pdfs>
 - The `--help` option can be used to display usage information.
 
 ## Features
@@ -55,7 +55,7 @@ smaller classes, with e.g. separate checkers for IEEE and ACM.
 
 ## Contributors
 
-The PdfChecker tool was first developed for [ICSE 2021][icse2021] by 
+The Submission Formatting Checker tool was first developed for [ICSE 2021][icse2021] by 
 Arie van Deursen (TU Delft) and Tao Xie (Peking University).
 It thankfully uses ideas from:
 
