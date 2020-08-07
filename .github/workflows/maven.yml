@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         java: [ 11, 12, 13 ]
-    name: Java ${{ matrix.java }} sample
+    name: Java ${{ matrix.java }}
 
     steps:
     - uses: actions/checkout@v2
@@ -24,5 +24,5 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java }}
-    - name: Build with Maven
+    - name: Build / test with maven
       run: mvn -B package --file pom.xml
