@@ -1,7 +1,7 @@
-# PDF Checker
+# SFC: The Submission Formatting Checker
 
 Simple tool to check paper submissions for conformance
-to formatting and double blind policies.
+to formatting and author identity hiding policies.
 
 The tool can be used by program chairs to check submissions,
 as well as by authors to check papers they intend to
@@ -31,13 +31,15 @@ which you offer to the command line.
 
 ## Features
 
-The tool can check:
+The tool can warn about:
 
 - Number of pages
 - Page where references start
-- Occurrence of figures, tables, appendix etc after page 10
-- IEEE style (defined as not ACM)
+- Occurrence of figures, tables, appendix etc after on pages that should contain references only.
+- Conformance to ACM or IEEE (defined as not ACM) style
 - Non-anonymous emails mentioned on page 1
+- Suspicious wording like "our previous paper [3]"
+- Pdf meta-data that might reveal authors.
 
 While the tool can handle papers in both IEEE and ACM style,
 the support for ACM style papers is still work in progress,
@@ -73,6 +75,8 @@ and Jon Whittle.
 
 You're welcome to contribute if you see additional meaningful checks.
 Issues with ideas or pull requests with working code (and tests) always welcome!
+Before spending lots of effort on a pull request make sure to open an issue first,
+so that we can discuss ideas upfront.
 
 The tool is licensed under the Apache License, Version 2.0,
  http://www.apache.org/licenses/LICENSE-2.0
