@@ -15,7 +15,7 @@
  *
  */
 
-package org.sigsoft;
+package org.sigsoft.sfc;
 
 import org.apache.commons.cli.*;
 import org.apache.commons.logging.Log;

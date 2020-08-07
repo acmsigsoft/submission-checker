@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.sigsoft</groupId>
-    <artifactId>pdfchecker</artifactId>
-    <version>0.1.0</version>
+    <artifactId>sfc</artifactId>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -39,7 +39,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>org.sigsoft.BatchChecker</mainClass>
+                                    <mainClass>org.sigsoft.sfc.BatchChecker</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

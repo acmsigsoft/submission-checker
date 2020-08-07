@@ -15,7 +15,7 @@
  *
  */
 
-package org.sigsoft;
+package org.sigsoft.sfc;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
