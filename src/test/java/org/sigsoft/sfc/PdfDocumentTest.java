@@ -47,9 +47,10 @@ public class PdfDocumentTest {
         String titleStart = "A Test-suite Diagnosability Metric";
         assertTrue(fullText.startsWith(titleStart));
 
-        String paperEnd = "November 16 - 22, 2014, 2014, pp. 654–665.\n";
-        assertTrue(fullText.endsWith(paperEnd));
-    }
+        // end of string may contain platform specific new lines: remove with skipTrailing.
+        String expectedEnd = "November 16 - 22, 2014, 2014, pp. 654–665.";
+        assertTrue(fullText.stripTrailing().endsWith(expectedEnd));
+     }
 
     @Test
     public void testAtPage()  {
