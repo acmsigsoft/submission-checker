@@ -29,14 +29,6 @@ import java.util.List;
 
 public class BatchChecker {
 
-    static {
-        // PdfBox can generate a lot of noise.
-        java.util.logging.Logger
-                .getLogger("org.apache.pdfbox").setLevel(java.util.logging.Level.SEVERE);
-        java.util.logging.Logger
-                .getLogger("org.apache.fontbox.ttf").setLevel(java.util.logging.Level.SEVERE);
-    }
-
     private final Log log = LogFactory.getLog(BatchChecker.class);
 
     // Style can be "ACM" or "IEEE";
