@@ -76,5 +76,9 @@ Issues with ideas or pull requests with working code (and tests) always welcome!
 Before spending lots of effort on a pull request make sure to open an issue first,
 so that we can discuss ideas upfront.
 
+If you have an issue for a specific paper, and you don't feel like sharing that
+version of the paper online yet (in an issue report), instead contact your program chairs,
+or send an email to [Arie van Deursen](https://avandeursen.com/about/).
+
 The tool is licensed under the Apache License, Version 2.0,
  http://www.apache.org/licenses/LICENSE-2.0
