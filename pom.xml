@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.sigsoft</groupId>
-    <artifactId>sfc</artifactId>
-    <version>0.2.0</version>
+    <artifactId>submission-checker</artifactId>
+    <version>0.3.0</version>
     <packaging>jar</packaging>
 
     <properties>
