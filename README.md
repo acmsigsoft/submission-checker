@@ -21,11 +21,19 @@ program chairs (possibly using the tool's output to base this decision on).
 
 ## Usage
 
-The tool runs in java 11 and is built using Apache [maven](https://maven.apache.org/).
+The Submission Checker runs in Java 11. If you have that installed,
+you can fetch the `.jar.zip` of the [latest release](https://github.com/acmsigsoft/submission-checker/releases):
+
+    unzip  submission-checker-{version}-jar-with-depencies.jar.zip
+    java -jar submission-checker-{version}-jar-with-depencies.jar --help
+
 It takes as arguments individual pdf files or folders containing pdf files
 which it will check.
 
-To run the tool:
+## Building the tool
+
+The tool is built using Apache [maven](https://maven.apache.org/).
+
 
 - Clone git repository
 - Run `mvn clean package`
