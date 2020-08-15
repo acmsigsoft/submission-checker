@@ -34,6 +34,9 @@ public class BatchChecker {
     // Style can be "ACM" or "IEEE";
     public String style = "IEEE";
 
+    // Which pages, if any, to display on stdout
+    public String showText = null;
+
     public String paperIssues(PdfChecker pc) {
         List<String> issues = new ArrayList<>();
         if (pc.pageCount() > pc.getTotalLimit()) {
@@ -79,6 +82,7 @@ public class BatchChecker {
             doc.loadFile(paper);
             PdfChecker pc = new PdfChecker();
             pc.setDocument(doc);
+            displayPages(doc, this.showText);
             // for debugging this is sometimes useful:
             // int pagenr = 1;
             // System.out.println(String.format("START-PAGE %d (of %d):---\n%sEND-PAGE\n", pagenr, doc.pageCount(), doc.textAtPage(pagenr)));
@@ -88,6 +92,26 @@ public class BatchChecker {
         } catch(Exception e) {
             // report, but then
             log.error(String.format("Error processing %s.", paper.getName()), e);
+        }
+    }
+
+    public void displayPages(PdfDocument doc, String pages) {
+        if (pages == null) {
+            return;
+        }
+        if ("all".equals(pages)) {
+            System.out.println(doc.fullText());
+            return;
+        }
+        try {
+            int pagenr = Integer.parseInt(pages);
+            if (pagenr < 1 || pagenr > doc.pageCount()) {
+                usage(String.format("Page nrs ``%d'' out of range for file %s", pagenr, doc.getFileName()));
+            } else {
+                System.out.println(String.format("START-PAGE %d (of %d) %s: ---\n%sEND-PAGE\n", pagenr, doc.pageCount(), doc.getFileName(), doc.textAtPage(pagenr)));
+            }
+        } catch (NumberFormatException nfe) {
+            usage(String.format("Wrong <pagenr> ``%s'' given to option showtext.", pages));
         }
     }
 
@@ -103,14 +127,18 @@ public class BatchChecker {
         Options options = new Options();
         options.addOption("s", "style", true, "ACM or IEEE style, default IEEE");
         options.addOption("h", "help", false, "Display help information");
+        options.addOption("t", "showtext", true, "Display text of given page on stdout");
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, argv);
 
         this.style = cmd.getOptionValue("s", "IEEE");
+        this.showText = cmd.getOptionValue("t", null);
         if (cmd.hasOption("h")) {
             usage(null);
             return;
         }
+
+
         processFileArgs(cmd.getArgs());
     }
 
@@ -134,9 +162,12 @@ public class BatchChecker {
         if (error != null) {
             System.err.println(String.format("ERROR: %s", error));
         }
-        String msg = String.format("Usage: %s [options] [folder-with-pdfs...] [pdf-file ...]\n", BatchChecker.class.getName());
+        String tool = BatchChecker.class.getName();
+        String msg = String.format("Usage: %s [options] [folder-with-pdfs...] [pdf-file ...]\n", tool);
         msg += "  Options:\n";
         msg += "  --style <style>    Set style in ACM or IEEE, default IEEE\n";
+        msg += "  --showtext <pages> Show plain text of pages on stdout. <pages> can be nr or 'all'\n";
+        msg += "                     Combine with '... | grep ...' to fetch custom patterns\n";
         System.err.println(msg);
     }
 
