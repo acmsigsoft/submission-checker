@@ -41,6 +41,11 @@ public class BatchChecker {
         List<String> issues = new ArrayList<>();
         if (pc.pageCount() > pc.getTotalLimit()) {
             issues.add(String.format("oversize:%d", pc.pageCount()));
+        } else {
+            final int minimum = Math.max(2, pc.pageLimit / 2);
+            if (pc.pageCount() <= minimum) {
+                issues.add(String.format("paper-very-short:%d", pc.pageCount()));
+            }
         }
         if (pc.referencesPage() > pc.pageLimit + 1) {
             issues.add(String.format("reference-page-after-limit:%d",pc.referencesPage()));
@@ -79,18 +84,16 @@ public class BatchChecker {
     public void processPaper(File paper) throws IOException {
         try (PdfDocument doc = new PdfDocument()) {
             log.trace("Processing " + paper.getName());
+
             doc.loadFile(paper);
             PdfChecker pc = new PdfChecker();
             pc.setDocument(doc);
-            displayPages(doc, this.showText);
-            // for debugging this is sometimes useful:
-            // int pagenr = 1;
-            // System.out.println(String.format("START-PAGE %d (of %d):---\n%sEND-PAGE\n", pagenr, doc.pageCount(), doc.textAtPage(pagenr)));
 
-            // The actual analysis:
-            System.out.println(paperIssues(pc));
+            displayPages(doc, this.showText);
+
+            String analysis = paperIssues(pc);
+            System.out.println(analysis);
         } catch(Exception e) {
-            // report, but then
             log.error(String.format("Error processing %s.", paper.getName()), e);
         }
     }
@@ -137,8 +140,6 @@ public class BatchChecker {
             usage(null);
             return;
         }
-
-
         processFileArgs(cmd.getArgs());
     }
 
