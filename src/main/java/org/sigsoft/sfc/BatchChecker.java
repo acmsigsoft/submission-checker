@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +37,9 @@ public class BatchChecker {
 
     // Which pages, if any, to display on stdout
     public String showText = null;
+
+    // Separate meta-data for all files processed, if available.
+    public MetaData meta = null;
 
     public String paperIssues(PdfChecker pc) {
         List<String> issues = new ArrayList<>();
@@ -69,6 +73,10 @@ public class BatchChecker {
         if (previousWork != null) {
             issues.add(String.format("previous-work-mentioned:``%s''", previousWork));
         }
+        String revealingMeta = pc.revealingMetaData();
+        if (revealingMeta != null) {
+            issues.add(String.format("possibly-identity-revealing-data:``%s''", revealingMeta));
+        }
 
         String result;
         if (issues.isEmpty()) {
@@ -88,15 +96,26 @@ public class BatchChecker {
             doc.loadFile(paper);
             PdfChecker pc = new PdfChecker();
             pc.setDocument(doc);
+            pc.setMetaData(getPaperMetaData(paper));
 
             displayPages(doc, this.showText);
 
             String analysis = paperIssues(pc);
             System.out.println(analysis);
         } catch(Exception e) {
-            log.error(String.format("Error processing %s.", paper.getName()), e);
+            System.err.println(String.format("Error processing %s. %s", paper.getName(), e));
+            e.printStackTrace();
         }
     }
+
+    private PaperMetaData getPaperMetaData(File paper) {
+        if (meta == null) {
+            return null;
+        } else {
+            return meta.forFile(paper);
+        }
+    }
+
 
     public void displayPages(PdfDocument doc, String pages) {
         if (pages == null) {
@@ -131,6 +150,7 @@ public class BatchChecker {
         options.addOption("s", "style", true, "ACM or IEEE style, default IEEE");
         options.addOption("h", "help", false, "Display help information");
         options.addOption("t", "showtext", true, "Display text of given page on stdout");
+        options.addOption("m", "meta", true, "CSV file with author meta-data.");
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, argv);
 
@@ -139,6 +159,10 @@ public class BatchChecker {
         if (cmd.hasOption("h")) {
             usage(null);
             return;
+        }
+        if (cmd.hasOption("m")) {
+            meta = new MetaData();
+            meta.loadHotCRPauthors(new FileReader(cmd.getOptionValue("m")));
         }
         processFileArgs(cmd.getArgs());
     }
@@ -154,7 +178,7 @@ public class BatchChecker {
             } else if (arg.endsWith(".pdf")) {
                 processPaper(farg);
             } else {
-                usage(String.format("Argument not a folder: %s", arg));
+                usage(String.format("Argument not a file or folder: %s", arg));
             }
         }
     }
@@ -169,11 +193,13 @@ public class BatchChecker {
         msg += "  --style <style>    Set style in ACM or IEEE, default IEEE\n";
         msg += "  --showtext <pages> Show plain text of pages on stdout. <pages> can be nr or 'all'\n";
         msg += "                     Combine with '... | grep ...' to fetch custom patterns\n";
+        msg += "  --meta <csv-file>  .csv file with author meta data. One row per author. Valid columns:\n";
+        msg += "                     paper,title,first,last,affiliation,email\n";
         System.err.println(msg);
     }
 
     public static void main(String[] argv) throws IOException, ParseException {
         BatchChecker bc = new BatchChecker();
         bc.processOptions(argv);
-     }
+    }
 }

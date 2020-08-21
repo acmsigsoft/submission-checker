@@ -32,7 +32,7 @@ public class PdfDocumentTest {
     @BeforeEach
     public void setUp() throws IOException {
         pdf = new PdfDocument();
-        pdf.loadResource("icse2017-ddu.pdf");
+        pdf.loadResource("icse2017-paper13.pdf");
     }
 
     @AfterEach

@@ -17,6 +17,7 @@
 
 package org.sigsoft.sfc;
 
+import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,8 +25,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -104,8 +107,7 @@ public class PdfCheckerTest {
     void testTextOnReferencePage(String text) {
         createReferencesOnePager(String.format("TEXT BEFORE\n%s\nTEXT AFTER", text));
         String resultingText = pc.figuresAfterLimit();
-        assertNotNull(resultingText);
-        assertTrue(text.startsWith(pc.figuresAfterLimit()));
+        assertThat(text).startsWith(pc.figuresAfterLimit());
     }
 
     @Test
@@ -171,7 +173,7 @@ public class PdfCheckerTest {
         when(doc.metaDataCreator()).thenReturn("LaTeX with acmart 2019/08/24 v1.64 Typesetting articles for the Association for Computing Machinery and hyperref 2017/03/14 v6.85a Hypertext links for LaTeX");
         assertTrue(pc.isACM());
         assertFalse(pc.isIEEE());
-   }
+    }
 
     @Test
     void testACMpermissions() {
@@ -188,19 +190,19 @@ public class PdfCheckerTest {
 
     @Test
     void testCountingLineNumbers() {
-        String[] text = {"10", "11", "12", "13", "HELLO WORLD" };
+        String[] text = {"10", "11", "12", "13", "HELLO WORLD"};
         assertEquals(4, pc.countLineNumbers(text));
-     }
+    }
 
     @Test
     void testCountingNonConsecutiveLineNumbers() {
-        String[] text = {"10", "11", "14", "15", "HELLO WORLD" };
+        String[] text = {"10", "11", "14", "15", "HELLO WORLD"};
         assertEquals(2, pc.countLineNumbers(text));
     }
 
     @Test
     void testCountingNoLineNumbers() {
-        String[] text = { "HELLO WORLD" };
+        String[] text = {"HELLO WORLD"};
         assertEquals(0, pc.countLineNumbers(text));
     }
 
@@ -282,5 +284,32 @@ public class PdfCheckerTest {
     void testPreviousWork() {
         createDocument("In our previous work [2]", "References\n[2] K. Beck. Test Infected");
         assertEquals("our previous work [2]", pc.previousWork());
+    }
+
+    @Test
+    void testMetaData() {
+        createDocument("Test Infected. Kent Beck and Erich Gamma");
+        var paper = createPaper("Test Infected", "Kent", "Beck", "kent@beck.com");
+        pc.setMetaData(paper);
+        assertThat(pc.revealingMetaData()).isEqualTo("Kent Beck");
+    }
+
+    @Test
+    void testLatexMetaData() {
+        createDocument("Emil und die Detektive. Erich Kästner");
+        var paper = createPaper("Test Infected", "Erich", "K{\\\"a}stner", "kent@beck.com");
+        pc.setMetaData(paper);
+        assertThat(pc.revealingMetaData()).as("Latex in %s not resolved").isNull();
+    }
+
+
+    private PaperMetaData createPaper(String title, String first, String last, String email) {
+        var paper = new PaperMetaData("1234", title);
+        var author = new Author();
+        author.setFirstName(first);
+        author.setLastName(last);
+        author.setEmail(email);
+        paper.addAuthor(author);
+        return paper;
     }
 }

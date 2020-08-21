@@ -42,6 +42,8 @@ public class PdfChecker {
     int pageLimit = 10;
     int referenceLimit = 2;
 
+    private PaperMetaData metaData = null;
+
     final private Log log = LogFactory.getLog(PdfChecker.class);
 
     public int getTotalLimit() {
@@ -368,5 +370,34 @@ public class PdfChecker {
 
     private boolean copyrightIEEE(@NotNull String line) {
         return line.matches(".*20XX IEEE.*");
+    }
+
+    public void setMetaData(PaperMetaData metaData) {
+        this.metaData = metaData;
+    }
+
+    public String revealingMetaData() {
+        if (metaData == null) {
+            return null;
+        }
+        String page1 = document.textAtPage(1);
+        String result = null;
+        for (Author author: metaData.getAuthors()) {
+            String name = Pattern.quote(author.getName());
+            String email = Pattern.quote(author.getEmail());
+            String regex = String.format("(%s)|(%s)", name, email);
+            String found = match(regex, page1);
+            if (found != null) {
+                if (result == null) {
+                    result = found;
+                } else {
+                    result += "," + found;
+                }
+             }
+        }
+        if (result == "") {
+            result = null;
+        }
+        return result;
     }
 }
