@@ -325,15 +325,15 @@ public class PdfChecker {
 
     private static Pattern _previousWorkPattern = null;
     private static Pattern previousWorkPattern() {
-        if (_previousWorkPattern != null) {
-            return _previousWorkPattern;
+        if (_previousWorkPattern == null) {
+            String our = "our|my";
+            String previous = "previous|earlier|prior";
+            String work = "work|study|studies|approach|papers?|publications?|result|findings?";
+            String citation = "\\[[\\d\\,]+\\]";
+            String regex = "(" + String.join(")\\s+(", our, previous, work, citation) + ")";
+            _previousWorkPattern = Pattern.compile(regex, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
         }
-        String our = "our|my";
-        String previous = "previous|earlier|prior";
-        String work = "work|study|studies|approach|papers?|publications?|result|findings?";
-        String citation = "\\[[\\d\\,]+\\]";
-        String regex = "(" + String.join(")\\s+(", our, previous, work, citation) + ")";
-        return Pattern.compile(regex, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+        return _previousWorkPattern;
     }
 
     public String getFileName() {
