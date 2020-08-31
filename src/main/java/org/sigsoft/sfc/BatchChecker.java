@@ -145,14 +145,21 @@ public class BatchChecker {
         }
     }
 
-    public void processOptions(String ...argv) throws ParseException, IOException {
+    public void processOptions(String ...argv) throws IOException {
         Options options = new Options();
         options.addOption("s", "style", true, "ACM or IEEE style, default IEEE");
         options.addOption("h", "help", false, "Display help information");
         options.addOption("t", "showtext", true, "Display text of given page on stdout");
         options.addOption("m", "meta", true, "CSV file with author meta-data.");
         CommandLineParser parser = new DefaultParser();
-        CommandLine cmd = parser.parse(options, argv);
+
+        CommandLine cmd;
+        try {
+            cmd = parser.parse(options, argv);
+        } catch(ParseException pe) {
+            usage(pe.getMessage());
+            return;
+        }
 
         this.style = cmd.getOptionValue("s", "IEEE");
         this.showText = cmd.getOptionValue("t", null);
@@ -190,15 +197,16 @@ public class BatchChecker {
         String tool = BatchChecker.class.getName();
         String msg = String.format("Usage: %s [options] [folder-with-pdfs...] [pdf-file ...]\n", tool);
         msg += "  Options:\n";
-        msg += "  --style <style>    Set style in ACM or IEEE, default IEEE\n";
-        msg += "  --showtext <pages> Show plain text of pages on stdout. <pages> can be nr or 'all'\n";
-        msg += "                     Combine with '... | grep ...' to fetch custom patterns\n";
-        msg += "  --meta <csv-file>  .csv file with author meta data. One row per author. Valid columns:\n";
-        msg += "                     paper,title,first,last,affiliation,email\n";
+        msg += "  -s|--style <style>    Set style in ACM or IEEE, default IEEE\n";
+        msg += "  -t|--showtext <pages> Show plain text of pages on stdout. <pages> can be nr or 'all'\n";
+        msg += "                        Combine with '... | grep ...' to fetch custom patterns\n";
+        msg += "  -m|--meta <csv-file>  .csv file with author meta data. One row per author. Valid columns:\n";
+        msg += "                        paper,title,first,last,affiliation,email\n";
+        msg += "  -h|--help             Show this information";
         System.err.println(msg);
     }
 
-    public static void main(String[] argv) throws IOException, ParseException {
+    public static void main(String[] argv) throws IOException {
         BatchChecker bc = new BatchChecker();
         bc.processOptions(argv);
     }
