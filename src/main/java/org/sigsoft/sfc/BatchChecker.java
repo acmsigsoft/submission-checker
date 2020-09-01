@@ -52,7 +52,7 @@ public class BatchChecker {
             }
         }
         if (pc.referencesPage() > pc.pageLimit + 1) {
-            issues.add(String.format("reference-page-after-limit:%d",pc.referencesPage()));
+            issues.add(String.format("reference-page-after-limit:%d", pc.referencesPage()));
         }
         if (style.equals("ACM") && !pc.isACM() || style.equals("IEEE") && !pc.isIEEE()) {
             issues.add(String.format("wrong-template:must-be-%s", style));
@@ -77,6 +77,7 @@ public class BatchChecker {
         if (revealingMeta != null) {
             issues.add(String.format("possibly-identity-revealing-data:``%s''", revealingMeta));
         }
+        // pc.titlesConsistent gives too many false alarms. Omitted for now.
 
         String result;
         if (issues.isEmpty()) {
@@ -89,7 +90,7 @@ public class BatchChecker {
         return String.format("%-24s %s", pc.getFileName(), result);
     }
 
-    public void processPaper(File paper) throws IOException {
+    public void processPaper(File paper) {
         try (PdfDocument doc = new PdfDocument()) {
             log.trace("Processing " + paper.getName());
 
@@ -103,7 +104,8 @@ public class BatchChecker {
             String analysis = paperIssues(pc);
             System.out.println(analysis);
         } catch(Exception e) {
-            System.err.println(String.format("Error processing %s. %s", paper.getName(), e));
+            // show error, but permit progressing to next paper.
+            System.err.printf("Error processing %s. %s%n", paper.getName(), e);
             e.printStackTrace();
         }
     }
@@ -130,14 +132,14 @@ public class BatchChecker {
             if (pagenr < 1 || pagenr > doc.pageCount()) {
                 usage(String.format("Page nrs ``%d'' out of range for file %s", pagenr, doc.getFileName()));
             } else {
-                System.out.println(String.format("START-PAGE %d (of %d) %s: ---\n%sEND-PAGE\n", pagenr, doc.pageCount(), doc.getFileName(), doc.textAtPage(pagenr)));
+                System.out.printf("START-PAGE %d (of %d) %s: ---\n%sEND-PAGE\n%n", pagenr, doc.pageCount(), doc.getFileName(), doc.textAtPage(pagenr));
             }
         } catch (NumberFormatException nfe) {
             usage(String.format("Wrong <pagenr> ``%s'' given to option showtext.", pages));
         }
     }
 
-    public void processPapers(File paperDir) throws IOException {
+    public void processPapers(File paperDir) {
         File[] files = paperDir.listFiles((d, name) -> name.endsWith(".pdf"));
         Arrays.sort(files);
         for (final File paper : files) {
@@ -174,7 +176,7 @@ public class BatchChecker {
         processFileArgs(cmd.getArgs());
     }
 
-    public void processFileArgs(String[] argv) throws IOException {
+    public void processFileArgs(String[] argv) {
         if (argv.length == 0) {
             usage("No arguments provided, not processing any files.");
         }
@@ -192,7 +194,7 @@ public class BatchChecker {
 
     public void usage(String error) {
         if (error != null) {
-            System.err.println(String.format("ERROR: %s", error));
+            System.err.printf("ERROR: %s%n", error);
         }
         String tool = BatchChecker.class.getName();
         String msg = String.format("Usage: %s [options] [folder-with-pdfs...] [pdf-file ...]\n", tool);

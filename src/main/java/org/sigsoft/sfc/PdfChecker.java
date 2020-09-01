@@ -19,6 +19,7 @@ package org.sigsoft.sfc;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -348,13 +349,26 @@ public class PdfChecker {
      * @return Title of the document.
      */
     public String getTitle() {
+        // in likelihood of being correct:
+        String paperTitle = titleFromText();
+        if (paperTitle != null) {
+            return paperTitle;
+        }
+        String metaTitle = titleFromSubmissionForm();
+        if (metaTitle != null) {
+            return metaTitle;
+        }
+        return document.metaDataTitle();
+    }
+
+    public String titleFromText() {
         String page1 = stripLineNumbers(document.textAtPage(1));
         String line1 = getFirstLine(page1).strip();
         if (copyrightIEEE(line1)) {
             line1 = getFirstLine(page1.substring(line1.length() + 2));
         }
-        if (line1.strip().equals("")) {
-            return document.metaDataTitle();
+        if (line1 == "") {
+            line1 = null;
         }
         return line1;
     }
@@ -399,5 +413,50 @@ public class PdfChecker {
             result = null;
         }
         return result;
+    }
+
+    public String titleFromSubmissionForm() {
+        return metaData == null? null : metaData.getTitle();
+    }
+
+    private boolean similarStart(@NotNull String t1, @NotNull String t2) {
+        var len = Math.min(t1.length(), t2.length());
+        var t11 = t1.substring(0, len).toLowerCase();
+        var t22 = t2.substring(0, len).toLowerCase();
+        int distance = (new LevenshteinDistance().apply(t11, t22));
+        return distance < 5;
+    }
+
+    public String titlesConsistent() {
+        String textTitle = titleFromText();
+        String metaTitle = titleFromSubmissionForm();
+        String pdfTitle = document.metaDataTitle();
+
+        if (metaTitle != null) {
+            // the most solid ground truth.
+            if (textTitle != null) {
+                // testTitle can be shorter, but start must be same.
+                if (!similarStart(metaTitle, textTitle)) {
+                    return String.format("``%s''-vs-txt-``%s''", metaTitle, textTitle);
+                }
+                if (pdfTitle != null) {
+                    if (!similarStart(metaTitle, pdfTitle)) {
+                        return String.format("``%s''-vs-pdf-``%s''", metaTitle, pdfTitle);
+                    }
+                }
+            }
+            // ok
+            return null;
+        }
+        // no submission info.
+        if (textTitle != null) {
+            if (pdfTitle != null) {
+                if (!similarStart(pdfTitle, textTitle)) {
+                    return String.format("``%s''-vs-``%s''", pdfTitle, textTitle);
+                }
+            }
+        }
+        // all suspicious cases checked. Should be OK.
+        return null;
     }
 }

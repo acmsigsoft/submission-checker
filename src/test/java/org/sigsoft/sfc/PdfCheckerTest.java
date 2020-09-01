@@ -17,18 +17,20 @@
 
 package org.sigsoft.sfc;
 
-import static org.assertj.core.api.Assertions.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -107,7 +109,7 @@ public class PdfCheckerTest {
     void testTextOnReferencePage(String text) {
         createReferencesOnePager(String.format("TEXT BEFORE\n%s\nTEXT AFTER", text));
         String resultingText = pc.figuresAfterLimit();
-        assertThat(text).startsWith(pc.figuresAfterLimit());
+        assertThat(text).startsWith(resultingText);
     }
 
     @Test
@@ -301,6 +303,49 @@ public class PdfCheckerTest {
         pc.setMetaData(paper);
         assertThat(pc.revealingMetaData()).as("Latex in %s not resolved").isNull();
     }
+
+    @ParameterizedTest
+    @MethodSource("inconsistentTitleProvider")
+    void testInconsistentTitles(String metaTitle, String pdfTitle, String textTitle, String cause) {
+        createDocument(String.format("%s\nAnonymous Author", textTitle));
+        when(doc.metaDataTitle()).thenReturn(pdfTitle);
+        var paper = createPaper(metaTitle, "Unblinded", "Author", "unblinded@university.com");
+        pc.setMetaData(paper);
+        assertThat(pc.titlesConsistent()).contains(cause);
+    }
+
+    static Stream<Arguments> inconsistentTitleProvider() {
+        return Stream.of(
+                arguments("inconsistent", "title", "provider", "provider"),
+                arguments("inconsistent", "inconsistent", "provider", "provider"),
+                arguments("inconsistent", "inconsistent", "provider", "inconsistent"),
+                arguments(null, "title", "provider", "provider")
+        );
+    }
+
+    static Stream<Arguments> consistentTitleProvider() {
+        return Stream.of(
+                arguments("t1", "t1", "t1"),
+                arguments("almost t1", "almost t2", "almost t3"),
+                arguments("Hello: World!", "Hello World", "Hello World?"),
+                arguments("UPPER", "upper", "UPPER"),
+                arguments("t1:sub1", "t1", "t1"),
+                arguments(null, "t2", "t2"),
+                arguments(null, null, "t3"),
+                arguments(null, null, null)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("consistentTitleProvider")
+    void testConsistentTitles(String metaTitle, String pdfTitle, String textTitle) {
+        createDocument(String.format("%s\nAnonymous Author", textTitle));
+        when(doc.metaDataTitle()).thenReturn(pdfTitle);
+        var paper = createPaper(metaTitle, "Unblinded", "Author", "unblinded@university.com");
+        pc.setMetaData(paper);
+        assertThat(pc.titlesConsistent()).isNull();
+    }
+
 
 
     private PaperMetaData createPaper(String title, String first, String last, String email) {

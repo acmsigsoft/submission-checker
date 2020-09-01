@@ -27,7 +27,7 @@ import java.nio.file.Paths;
 public class BatchCheckerTest {
 
     @Test
-    public void testMain() throws IOException, ParseException, URISyntaxException {
+    public void testMain() throws IOException, URISyntaxException {
         String paper = resource("icse2017-paper13.pdf");
         String meta = resource("icse2017-authors.csv");
         String[] args = {"--style", "IEEE", "--meta", meta, paper};
@@ -35,7 +35,7 @@ public class BatchCheckerTest {
     }
 
     @Test
-    public void testJustFile() throws IOException, ParseException, URISyntaxException {
+    public void testJustFile() throws IOException, URISyntaxException {
         String paper = resource("icse2017-paper13.pdf");
         BatchChecker.main(new String[]{paper});
     }
