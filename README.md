@@ -52,6 +52,11 @@ The tool can warn about:
 - Suspicious wording like "our previous paper [3]"
 - Pdf meta-data that might reveal authors.
 
+The Submission Checker can be used for bulk analysis of all pdfs in a folder.
+In that case it is also possible to add a `.csv` file with meta-data
+of authors (their names and email addresses), so that the Checker can 
+search for accidental occurrences of these author identifiers.
+
 While the tool can handle papers in both IEEE and ACM style,
 the support for ACM style papers is still work in progress,
 and the accuracy may be a little lower.
