@@ -19,12 +19,21 @@ The conference call for papers is leading when deciding whether a paper
 meets the submission guidelines. This decision is made by the 
 program chairs (possibly using the tool's output to base this decision on). 
 
+## Installation
+
+The Submission Checker runs on Java 11.
+
+The relevant jar is distributed as a 
+[GitHub package](https://github.com/orgs/acmsigsoft/packages?repo_name=submission-checker).
+From the latest release the "Asset" to obtain is
+
+    submission-checker-{version}-jar-with-dependencies.jar
+
 ## Usage
 
-The Submission Checker runs in Java 11. If you have that installed,
-you can fetch the `.jar.zip` of the [latest release](https://github.com/acmsigsoft/submission-checker/releases):
+The jar is a simple command line tool. Use the `--help` option to learn how to
+ use it.
 
-    unzip  submission-checker-{version}-jar-with-dependencies.jar.zip
     java -jar submission-checker-{version}-jar-with-depencies.jar --help
 
 It takes as arguments individual pdf files or folders containing pdf files
