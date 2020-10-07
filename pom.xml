@@ -6,8 +6,28 @@
 
     <groupId>org.sigsoft</groupId>
     <artifactId>submission-checker</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
     <packaging>jar</packaging>
+
+    <description>
+        The SIGSOFT Submission Checker (SSC) is a simple tool to check paper submissions to
+        conferences for conformance to formatting (in ACM and IEEE styles) and author
+        identity hiding policies.
+
+        The tool can be used by program chairs to check all submissions in bulk,
+        as well as by individual authors to check papers they intend to submit themselves.
+
+        The tool builds on Apache PDFBox to extract pages and text from a pdf,
+        and then applies simple regular expression matching to find suspicious patterns.
+    </description>
+
+    <contributors>
+        <contributor>
+            <name>Arie van Deursen</name>
+            <organization>Delft University of Technology, The Netherlands</organization>
+            <url>https://avandeursen.com</url>
+        </contributor>
+    </contributors>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
