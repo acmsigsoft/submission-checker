@@ -40,15 +40,31 @@ import java.util.regex.Pattern;
 public class PdfChecker {
 
     @NotNull PdfDocument document;
-    int pageLimit = 10;
-    int referenceLimit = 2;
+
+    /**
+     * The maximum number of pages of the main text
+     */
+    public static int PAGE_LIMIT = 10;
+
+    /**
+     * The maximum number of additional pages for references only.
+     */
+    public static int REFERENCE_LIMIT = 2;
 
     private PaperMetaData metaData = null;
 
     final private Log log = LogFactory.getLog(PdfChecker.class);
 
+    public int getPageLimit() {
+        return PAGE_LIMIT;
+    }
+
+    public int getReferenceLimit() {
+        return REFERENCE_LIMIT;
+    }
+
     public int getTotalLimit() {
-        return pageLimit + referenceLimit;
+        return getPageLimit() + getReferenceLimit();
     }
 
     public int pageCount() {
@@ -227,16 +243,16 @@ public class PdfChecker {
     }
 
     public String figuresAfterLimit() {
-        if (document.pageCount() <= pageLimit) {
+        if (document.pageCount() <= getPageLimit()) {
             return null;
         }
-        for (int pagenr = document.pageCount(); pagenr > pageLimit; pagenr--) {
+        for (int pagenr = document.pageCount(); pagenr > getPageLimit(); pagenr--) {
             String figText = pageContainsFigure(pagenr);
             if (figText != null) {
                 return figText;
             }
         }
-        String beforeReferences = isReferencesPage(pageLimit + 1);
+        String beforeReferences = isReferencesPage(getPageLimit() + 1);
         final int leewayForPageNr = 8;
         if (beforeReferences == null || beforeReferences.length() <= leewayForPageNr) {
             return null;

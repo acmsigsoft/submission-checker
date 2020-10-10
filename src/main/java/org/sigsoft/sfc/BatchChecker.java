@@ -17,9 +17,13 @@
 
 package org.sigsoft.sfc;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileReader;
@@ -43,24 +47,27 @@ public class BatchChecker {
 
     public String paperIssues(PdfChecker pc) {
         List<String> issues = new ArrayList<>();
+
+        if (style.equals("ACM") && !pc.isACM() || style.equals("IEEE") && !pc.isIEEE()) {
+            issues.add(String.format("wrong-template:must-be-%s", style));
+        }
+
         if (pc.pageCount() > pc.getTotalLimit()) {
             issues.add(String.format("oversize:%d", pc.pageCount()));
         } else {
-            final int minimum = Math.max(2, pc.pageLimit / 2);
+            final int minimum = Math.max(2, pc.getPageLimit() / 2);
             if (pc.pageCount() <= minimum) {
                 issues.add(String.format("paper-very-short:%d", pc.pageCount()));
             }
         }
-        if (pc.referencesPage() > pc.pageLimit + 1) {
+        if (pc.referencesPage() > pc.getPageLimit() + 1) {
             issues.add(String.format("reference-page-after-limit:%d", pc.referencesPage()));
-        }
-        if (style.equals("ACM") && !pc.isACM() || style.equals("IEEE") && !pc.isIEEE()) {
-            issues.add(String.format("wrong-template:must-be-%s", style));
         }
         String textAfterLimit = pc.figuresAfterLimit();
         if (textAfterLimit != null) {
-            issues.add(String.format("non-references-after-p10:``%s''", textAfterLimit));
+            issues.add(String.format("non-references-after-p%d:``%s''", PdfChecker.PAGE_LIMIT, textAfterLimit));
         }
+
         String emails = pc.findEmails();
         if (emails != null) {
             issues.add(String.format("author-revealing-email:``%s''", emails));
@@ -148,32 +155,56 @@ public class BatchChecker {
     }
 
     public void processOptions(String ...argv) throws IOException {
-        Options options = new Options();
-        options.addOption("s", "style", true, "ACM or IEEE style, default IEEE");
-        options.addOption("h", "help", false, "Display help information");
-        options.addOption("t", "showtext", true, "Display text of given page on stdout");
-        options.addOption("m", "meta", true, "CSV file with author meta-data.");
-        CommandLineParser parser = new DefaultParser();
+        Options options = defineOptions();
 
         CommandLine cmd;
         try {
-            cmd = parser.parse(options, argv);
+            cmd = new DefaultParser().parse(options, argv);
         } catch(ParseException pe) {
             usage(pe.getMessage());
             return;
         }
 
-        this.style = cmd.getOptionValue("s", "IEEE");
-        this.showText = cmd.getOptionValue("t", null);
         if (cmd.hasOption("h")) {
             usage(null);
             return;
         }
+
+        this.style = cmd.getOptionValue("s", "IEEE");
+        this.showText = cmd.getOptionValue("t", null);
         if (cmd.hasOption("m")) {
             meta = new MetaData();
             meta.loadHotCRPauthors(new FileReader(cmd.getOptionValue("m")));
         }
+        processPageLimitOptions(cmd);
         processFileArgs(cmd.getArgs());
+    }
+
+    private void processPageLimitOptions(CommandLine cmd) {
+        var pageLimit = cmd.getOptionValue("p");
+        var refLimit = cmd.getOptionValue("r");
+        try {
+            if (pageLimit != null) {
+                PdfChecker.PAGE_LIMIT = Integer.parseInt(pageLimit);
+            }
+            if (refLimit != null) {
+                PdfChecker.REFERENCE_LIMIT = Integer.parseInt(refLimit);
+            }
+        } catch (NumberFormatException nfe) {
+            usage(String.format("Wrong page limit: ``%s''.", nfe.getMessage()));
+        }
+    }
+
+    @NotNull
+    private Options defineOptions() {
+        Options options = new Options();
+        options.addOption("s", "style", true, "'ACM' or 'IEEE' style, default IEEE");
+        options.addOption("h", "help", false, "Display help information");
+        options.addOption("t", "showtext", true, "Display text of given page (nr, or 'all') on stdout");
+        options.addOption("m", "meta", true, "CSV file with author meta-data.");
+        options.addOption("p","mainpages", true, "Nr of pages for main text");
+        options.addOption("r","refpages", true, "Nr of additional pages for references");
+        return options;
     }
 
     public void processFileArgs(String[] argv) {
@@ -199,12 +230,14 @@ public class BatchChecker {
         String tool = BatchChecker.class.getName();
         String msg = String.format("Usage: %s [options] [folder-with-pdfs...] [pdf-file ...]\n", tool);
         msg += "  Options:\n";
-        msg += "  -s|--style <style>    Set style in ACM or IEEE, default IEEE\n";
-        msg += "  -t|--showtext <pages> Show plain text of pages on stdout. <pages> can be nr or 'all'\n";
-        msg += "                        Combine with '... | grep ...' to fetch custom patterns\n";
-        msg += "  -m|--meta <csv-file>  .csv file with author meta data. One row per author. Valid columns:\n";
-        msg += "                        paper,title,first,last,affiliation,email\n";
-        msg += "  -h|--help             Show this information";
+        msg += "  -s, --style <style>    Set style in ACM or IEEE, default IEEE\n";
+        msg += "  -m, --meta <csv-file>  .csv file with author meta data. One row per author. Valid columns:\n";
+        msg += "                         paper,title,first,last,affiliation,email\n";
+        msg += "  -p, --mainpages <N>    main text should be maximum N pages (default = 10)\n";
+        msg += "  -r, --refpages <N>     nr of extra pages for references (default = 2)\n";
+        msg += "  -h, --help             Show this information\n";
+        msg += "  -t, --showtext <pages> Show plain text of pages on stdout. <pages> can be nr or 'all'\n";
+        msg += "                         Combine with '... | grep ...' to fetch custom patterns\n";
         System.err.println(msg);
     }
 

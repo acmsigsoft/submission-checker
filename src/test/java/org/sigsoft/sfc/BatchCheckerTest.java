@@ -17,7 +17,6 @@
 
 package org.sigsoft.sfc;
 
-import org.apache.commons.cli.ParseException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -30,7 +29,12 @@ public class BatchCheckerTest {
     public void testMain() throws IOException, URISyntaxException {
         String paper = resource("icse2017-paper13.pdf");
         String meta = resource("icse2017-authors.csv");
-        String[] args = {"--style", "IEEE", "--meta", meta, paper};
+        String[] args = {
+                "--style", "IEEE",
+                "--meta", meta,
+                "--mainpages", "9",
+                "--refpages", "3",
+                paper};
         BatchChecker.main(args);
     }
 

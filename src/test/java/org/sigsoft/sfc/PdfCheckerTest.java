@@ -134,8 +134,8 @@ public class PdfCheckerTest {
     private void createReferencesOnePager(String content) {
         String text = content + "\n[1] Test Infected\n";
         when(doc.textAtPage(eq(1))).thenReturn(text);
-        pc.pageLimit = 0;
-        pc.referenceLimit = 1;
+        PdfChecker.PAGE_LIMIT = 0;
+        PdfChecker.REFERENCE_LIMIT = 1;
     }
 
     private void createDocument(String... pages) {
