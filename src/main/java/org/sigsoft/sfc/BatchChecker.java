@@ -231,8 +231,8 @@ public class BatchChecker {
         String msg = String.format("Usage: %s [options] [folder-with-pdfs...] [pdf-file ...]\n", tool);
         msg += "  Options:\n";
         msg += "  -s, --style <style>    Set style in ACM or IEEE, default IEEE\n";
-        msg += "  -m, --meta <csv-file>  .csv file with author meta data. One row per author. Valid columns:\n";
-        msg += "                         paper,title,first,last,affiliation,email\n";
+        msg += "  -m, --meta <csv-file>  .csv file with author meta data. One row per author. Columns used:\n";
+        msg += "                         paper,title,first,last,email\n";
         msg += "  -p, --mainpages <N>    main text should be maximum N pages (default = 10)\n";
         msg += "  -r, --refpages <N>     nr of extra pages for references (default = 2)\n";
         msg += "  -h, --help             Show this information\n";

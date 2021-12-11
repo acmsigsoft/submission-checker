@@ -40,7 +40,8 @@ public class MetaData {
                 throw new IOException(String.format("Cannot find csv file %s on class path", fileName));
             }
             try (var reader = new InputStreamReader(stream);
-                var records = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(reader)) {
+                 var records = hotCrpCSVFormat().parse(reader)
+            ) {
                 for (CSVRecord record : records) {
                     processHotCRPRecord(record);
                 }
@@ -48,8 +49,16 @@ public class MetaData {
         }
     }
 
+    private CSVFormat hotCrpCSVFormat() {
+        return CSVFormat.DEFAULT
+                .builder()
+                .setHeader()
+                .setSkipHeaderRecord(true)
+                .build();
+    }
+
     public void loadHotCRPauthors(Reader reader) throws IOException {
-        try (var records = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(reader)) {
+        try (var records = hotCrpCSVFormat().parse(reader)) {
             for (CSVRecord record : records) {
                 processHotCRPRecord(record);
             }
